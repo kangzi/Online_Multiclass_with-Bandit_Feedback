@@ -10,8 +10,8 @@ class condition_error(Exception):
     pass
 
 
-class Banditron:
-    def __init__(self, x, y, test_x=None, test_y=None, gamma = 0.1, test_interval:int=1000):
+class Confidit:
+    def __init__(self, x, y, test_x=None, test_y=None, eta = 0.1, test_interval:int=1000):
         """
         :param x: feature patterns for train
         :param y: the correct labels for x
@@ -30,11 +30,13 @@ class Banditron:
 
         self.t = 0
 
-        self.K = np.max(y)+1
-        self.w = np.zeros((self.K, self.n))
-
-        self.gamma = gamma
+        self.eta = eta
+        self.alpha = 1.0
         self.interval = test_interval
+
+        self.K = np.max(y) + 1
+        self.w = np.zeros((self.K, self.n))
+        self.A = np.ones((self.K, self.n))*((1+self.alpha)**2)  # Matrix A (only diagonal element)
 
     def train(self, t):
         """
@@ -51,12 +53,14 @@ class Banditron:
 
         for count, i in enumerate(seq):
             x, y = self.x[i], self.y[i]
+            x = x / np.linalg.norm(x)  # the norm of x is 1.
 
-            predict = self._det_label(self._det_fun(self._fun(x)))
+            wx = self._det_fun(self._fun(x))
+            predict = self._det_label(wx)
 
-            gamma = self.gamma
-            proposed_label, p = self._det_proposed_label(predict, gamma)
-            self._update(x, predict, proposed_label, p, (proposed_label==y))
+            eta = self.eta
+            proposed_label = self._det_proposed_label(x, wx, eta)
+            self._update(x, proposed_label, (proposed_label==y))
 
             if predict == y:
                 correct += 1
@@ -69,67 +73,41 @@ class Banditron:
                 cl += 1
 
             if count % self.interval == 0:
-                print(count)
                 print("ordinary labels ratio", ol / (ol + cl))
                 print("accuracy ratio", correct / (correct + false))
-                print('')
                 ol_ratio_list.append(ol / (ol + cl))
                 accuracy_ratio_list.append(correct / (correct + false))
 
         return ol_ratio_list, accuracy_ratio_list
 
-    def _det_tau(self, x, predict, proposed_label, p_array, ordinary):
-        """
-        determine tau, which represents how much w should be updated.
-        :param x: feature vector
-        :param proposed_label: proposed label
-        :param p_array: the distribution over the proposed label
-        :param ordinary: whether the proposed label is true label or not
-        :return: tau
-        """
-        tau = np.zeros(self.K)
-        assert 0 <= predict < self.K and 0 <= proposed_label < self.K
-        tau[proposed_label] += ordinary / p_array[proposed_label]
-        tau[predict] -= 1.0
-        return tau
-
-    def _update(self, x, predict, proposed_label, p_array, ordinary:bool=True):
+    def _update(self, x, proposed_label, ordinary:bool=True):
         """
         :param x: feature vector
         :param proposed_label: proposed_label
-        :param p: the distribution over proposed_label
         :param ordinary: whether the proposed_label is true label or not
         """
-        tau = self._det_tau(x, predict, proposed_label, p_array, ordinary)
-        update = np.outer(tau, self._fun(x))
-        self.w += update
 
-    def _det_proposed_label(self, predict, gamma):
+        tau = 1.0 if ordinary else -1.0
+        fun_x = self._fun(x)
+        self.w[proposed_label] = self.w[proposed_label]*self.A[proposed_label] + tau * fun_x
+        self.A[proposed_label] += np.square(fun_x)
+
+        self.w[proposed_label] *= np.reciprocal(self.A[proposed_label])
+
+    def _det_proposed_label(self, x, wx, eta):
         """
         determine proposed label by sampling
-        :param predict: predicted label
-        :param gamma: the value of exploration (assumed 0 <= gamma <= 0.5)
-        :return: proposed label and p
+        :param x: the feature vector
+        :param wx: the output of the one-ver-all classifiers
+        :param eta: the value of exploration
+        :return: proposed label
         """
-        assert gamma >= 0.0
 
-        p = np.ones(self.K) * gamma / self.K
-        p[predict] += (1.0-gamma)
+        A_inverse = np.reciprocal(self.A)
+        e_square = eta * A_inverse.dot(x).T.dot(x)
+        e = np.sqrt(e_square)
 
-        cumulative_p = np.copy(p)
-        for i in range(1, self.K):
-            cumulative_p[i] = cumulative_p[i-1] + p[i]
-
-        assert abs(cumulative_p[self.K-1] - 1.0) <= 0.01
-        cumulative_p[self.K-1] = 1.0    # for computation
-
-        r = np.random.random()
-        k = 0
-        while cumulative_p[k] <= r:
-            k += 1
-
-        assert 0 <= k < self.K
-        return k, p
+        return np.argmax(wx + e)
 
     def _fun(self, x):
         """

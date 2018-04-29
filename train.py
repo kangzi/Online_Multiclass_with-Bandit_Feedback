@@ -5,6 +5,7 @@ import data
 import pickle
 import argparse
 import banditron
+import confidit
 
 class conditional_error(Exception):
     pass
@@ -17,10 +18,6 @@ parser.add_argument('--kernel', '--k', action='store_true',
                     help='Determine whether kernel is used.')
 parser.add_argument('--bag_size', '-b', type=int, default=500,
                     help='Determine the size of bags.')
-parser.add_argument('--C1', '-c1', type=float, default=1.0,
-                    help='conditional parameter for ordinary labels')
-parser.add_argument('--C2', '-c2', type=float, default=1.0,
-                    help='conditional parameter for complementary labels')
 parser.add_argument('--G', '-g', type=float, default=1.0,
                     help='hyper parameter for kernel')
 parser.add_argument('--complementary', '--c', action='store_true',
@@ -165,11 +162,11 @@ if __name__ == '__main__':
 
         print(args.kernel)
         if args.kernel:
-            PA = banditron.Banditron(x_train, y_train, x_test, y_test, g=args.G, B=args.bag_size,
+            Band = banditron.Banditron(x_train, y_train, x_test, y_test, g=args.G, B=args.bag_size,
                                         C1=args.C1, C2=args.C2, one_hot=False)
         else:
-            PA = banditron.Banditron(x_train, y_train, x_test, y_test, gamma=0.1, test_interval=100)
-        l, acc = PA.train(N)
+            Band = banditron.Banditron(x_train, y_train, x_test, y_test, gamma=0.2, test_interval=100)
+        l, acc = Band.train(N)
         if cum_l == []:
             cum_l = l
             cum_ac = acc
