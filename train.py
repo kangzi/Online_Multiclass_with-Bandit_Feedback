@@ -162,10 +162,10 @@ if __name__ == '__main__':
     for par in parameter_list:
         np.random.seed(0)
         if args.algorithm == 'banditron':
-            Band = banditron.Banditron(x_train, y_train, x_test, y_test, gamma=par, test_interval=100)
+            Band = banditron.Banditron(x_train, y_train, gamma=par, test_interval=100)
             l, acc, final_p = Band.train(N)
         elif args.algorithm == 'confidit':
-            Conf = confidit.Confidit(x_train, y_train, x_test, y_test, eta=par, test_interval=100)
+            Conf = confidit.Confidit(x_train, y_train, eta=par, test_interval=100)
             l, acc, final_p = Conf.train(N)
         else:
             raise conditional_error
@@ -180,10 +180,10 @@ if __name__ == '__main__':
 
         print(args.kernel)
         if args.algorithm == 'banditron':
-            Band = banditron.Banditron(x_train, y_train, x_test, y_test, gamma=best_parameter, test_interval=100)
+            Band = banditron.Banditron(x_train, y_train, gamma=best_parameter, test_interval=100)
             l, acc, final_p = Band.train(N)
         elif args.algorithm == 'confidit':
-            Conf = confidit.Confidit(x_train, y_train, x_test, y_test, eta=best_parameter, test_interval=100)
+            Conf = confidit.Confidit(x_train, y_train, eta=best_parameter, test_interval=100)
             l, acc, final_p = Conf.train(N)
         else:
             raise conditional_error
