@@ -13,7 +13,12 @@ class conditional_error(Exception):
 
 parser = argparse.ArgumentParser(description='Online Complementary Learning.')
 parser.add_argument('--dataset', '-d', type=str, default='mnist',
-                    help='Choose dataset')
+                    help='Choose dataset (default: mnist)')
+parser.add_argument('--algorithm', '-a', type=str, default='banditron',
+                    help='Choose an algorithm from \n'+
+                         'banditron \n' +
+                         'confidit \n' +
+                         '(default: banditron)')
 parser.add_argument('--kernel', '--k', action='store_true',
                     help='Determine whether kernel is used.')
 parser.add_argument('--bag_size', '-b', type=int, default=500,
@@ -74,14 +79,7 @@ if __name__ == '__main__':
 
     if args.dataset == '20news':
         K = 20
-        from sklearn.datasets import fetch_20newsgroups
-        news_groups_train = fetch_20newsgroups(subset='train')
-        news_groups_test = fetch_20newsgroups(subset='test')
-        vectorizer = TfidfVectorizer()
-        x_train = scipy.sparse.csr_matrix.toarray(vectorizer.fit_transform(news_groups_train.data))
-        x_test = scipy.sparse.csr_matrix.toarray(vectorizer.transform(news_groups_test.data))
-        y_train = news_groups_train.target
-        y_test = news_groups_test.target
+        x_train, y_train = data.get_data('./data/news20.scale')
 
     elif args.dataset == 'reuters':
         K = 20
@@ -154,19 +152,43 @@ if __name__ == '__main__':
         y_train -= 1
         y_test -= 1
 
+    if args.algorithm == 'banditron':
+        parameter_list = [0.001, 0.01, 0.025, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+    else:
+        parameter_list = [0.0001, 0.001, 0.01, 0.1, 1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0, 1000000.0]
+
     N = x_train.shape[0]
+
+    final_p_list = []
+    for par in parameter_list:
+        np.random.seed(0)
+        if args.algorithm == 'banditron':
+            Band = banditron.Banditron(x_train, y_train, x_test, y_test, gamma=par, test_interval=100)
+            l, acc, final_p = Band.train(N)
+        elif args.algorithm == 'confidit':
+            Conf = confidit.Confidit(x_train, y_train, x_test, y_test, eta=par, test_interval=100)
+            l, acc, final_p = Conf.train(N)
+        else:
+            raise conditional_error
+        final_p_list.append(final_p)
+
+    best_parameter = parameter_list[max(zip(final_p_list, range(len(final_p_list))))[1]]
+
     acc = []
     cum_l, cum_ac = [], []
     for p in range(seed1, seed2):
         np.random.seed(p)
 
         print(args.kernel)
-        if args.kernel:
-            Band = banditron.Banditron(x_train, y_train, x_test, y_test, g=args.G, B=args.bag_size,
-                                        C1=args.C1, C2=args.C2, one_hot=False)
+        if args.algorithm == 'banditron':
+            Band = banditron.Banditron(x_train, y_train, x_test, y_test, gamma=best_parameter, test_interval=100)
+            l, acc, final_p = Band.train(N)
+        elif args.algorithm == 'confidit':
+            Conf = confidit.Confidit(x_train, y_train, x_test, y_test, eta=best_parameter, test_interval=100)
+            l, acc, final_p = Conf.train(N)
         else:
-            Band = banditron.Banditron(x_train, y_train, x_test, y_test, gamma=0.2, test_interval=100)
-        l, acc = Band.train(N)
+            raise conditional_error
+
         if cum_l == []:
             cum_l = l
             cum_ac = acc
@@ -174,10 +196,13 @@ if __name__ == '__main__':
             cum_l = [x + y for (x, y) in zip(cum_l, l)]
             cum_ac = [x + y for (x, y) in zip(cum_ac, acc)]
 
+    print(final_p_list)
+    print([max(zip(final_p_list, range(len(final_p_list))))[1]])
+    print(parameter_list[max(zip(final_p_list, range(len(final_p_list))))[1]])
     cum_l = [x / (seed2 - seed1) for x in cum_l]
     cum_ac = [x / (seed2 - seed1) for x in cum_ac]
 
-    write_f = open('./result/'+args.f_name+'_banditron_l.pickle', 'wb')
-    pickle.dump(cum_l, write_f)
-    write_f.close()
-    # pickle.dump(cum_ac, './result/' + args.f_name + '_ac.pickle')
+    with open('./result/'+args.f_name+'_'+args.algorithm+'_l.pickle', 'wb') as write_f:
+        pickle.dump(cum_l, write_f)
+    with open('./result/' + args.f_name + '_' + args.algorithm + '_ac.pickle', 'wb') as write_f:
+        pickle.dump(cum_ac, write_f)

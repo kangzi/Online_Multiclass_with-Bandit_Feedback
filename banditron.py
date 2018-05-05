@@ -76,7 +76,8 @@ class Banditron:
                 ol_ratio_list.append(ol / (ol + cl))
                 accuracy_ratio_list.append(correct / (correct + false))
 
-        return ol_ratio_list, accuracy_ratio_list
+        final_p = ol / (ol + cl)
+        return ol_ratio_list, accuracy_ratio_list, final_p
 
     def _det_tau(self, x, predict, proposed_label, p_array, ordinary):
         """
