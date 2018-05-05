@@ -85,8 +85,9 @@ class Confidit:
                 ol_ratio_list.append(ol / (ol + cl))
                 accuracy_ratio_list.append(correct / (correct + false))
 
-        final_accuracy = ol / (ol + cl)
-        return ol_ratio_list, accuracy_ratio_list, final_accuracy
+        final_l = ol / (ol + cl)
+        final_ac = correct / (correct + false)
+        return ol_ratio_list, accuracy_ratio_list, final_l, final_ac
 
     def _update(self, x, proposed_label, ordinary:bool=True):
         """

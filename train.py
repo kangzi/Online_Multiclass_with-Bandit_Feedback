@@ -6,6 +6,7 @@ import pickle
 import argparse
 import banditron
 import confidit
+from statistics import mean, stdev
 
 class conditional_error(Exception):
     pass
@@ -163,10 +164,10 @@ if __name__ == '__main__':
         np.random.seed(0)
         if args.algorithm == 'banditron':
             Band = banditron.Banditron(x_train, y_train, gamma=par, test_interval=100)
-            l, acc, final_p = Band.train(N)
+            l, acc, final_p, _ = Band.train(N)
         elif args.algorithm == 'confidit':
             Conf = confidit.Confidit(x_train, y_train, eta=par, test_interval=100)
-            l, acc, final_p = Conf.train(N)
+            l, acc, final_p, _ = Conf.train(N)
         else:
             raise conditional_error
         final_p_list.append(final_p)
@@ -175,18 +176,22 @@ if __name__ == '__main__':
 
     acc = []
     cum_l, cum_ac = [], []
+    l_list, ac_list = [], []
     for p in range(seed1, seed2):
         np.random.seed(p)
 
         print(args.kernel)
         if args.algorithm == 'banditron':
             Band = banditron.Banditron(x_train, y_train, gamma=best_parameter, test_interval=100)
-            l, acc, final_p = Band.train(N)
+            l, acc, final_p, final_ac = Band.train(N)
         elif args.algorithm == 'confidit':
             Conf = confidit.Confidit(x_train, y_train, eta=best_parameter, test_interval=100)
-            l, acc, final_p = Conf.train(N)
+            l, acc, final_p, final_ac = Conf.train(N)
         else:
             raise conditional_error
+
+        l_list.append(final_p)
+        ac_list.append(final_ac)
 
         if cum_l == []:
             cum_l = l
@@ -205,3 +210,8 @@ if __name__ == '__main__':
         pickle.dump(cum_l, write_f)
     with open('./result/' + args.f_name + '_' + args.algorithm + '_ac.pickle', 'wb') as write_f:
         pickle.dump(cum_ac, write_f)
+
+    print("ordinary label mean", mean(l_list))
+    print("ordinary label stdev", stdev(l_list))
+    print("predict mean", mean(ac_list))
+    print("predict stdev", stdev(ac_list))
