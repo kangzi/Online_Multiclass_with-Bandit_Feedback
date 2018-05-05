@@ -150,7 +150,6 @@ if __name__ == '__main__':
 
     if np.min(y_train) == 1:
         y_train -= 1
-        y_test -= 1
 
     if args.algorithm == 'banditron':
         parameter_list = [0.001, 0.01, 0.025, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
