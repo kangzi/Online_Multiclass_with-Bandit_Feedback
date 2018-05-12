@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 sys.path.append(os.pardir)
 import pylab
 
-
 class condition_error(Exception):
     pass
 
@@ -80,7 +79,6 @@ class Confidit:
                 print(count)
                 print("ordinary labels ratio", ol / (ol + cl))
                 print("accuracy ratio", correct / (correct + false))
-                print(sa)
                 print('')
                 ol_ratio_list.append(ol / (ol + cl))
                 accuracy_ratio_list.append(correct / (correct + false))
@@ -100,7 +98,6 @@ class Confidit:
         fun_x = self._fun(x)
         self.w[proposed_label] = self.w[proposed_label]*self.A[proposed_label] + tau * fun_x
         self.A[proposed_label] += np.square(fun_x)
-
         self.w[proposed_label] *= np.reciprocal(self.A[proposed_label])
 
     def _det_proposed_label(self, x, wx, eta):
@@ -113,7 +110,8 @@ class Confidit:
         """
 
         A_inverse = np.reciprocal(self.A)
-        e_square = eta * (A_inverse*x).dot(x)
+        e_square = eta * (A_inverse*self._fun(x)).dot(self._fun(x))
+        assert e_square.shape == (self.K, )
         e = np.sqrt(e_square)
         return np.argmax(wx + e)
 

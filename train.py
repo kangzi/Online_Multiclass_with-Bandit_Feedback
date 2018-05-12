@@ -6,7 +6,9 @@ import pickle
 import argparse
 import banditron
 import confidit
+import bpa
 from statistics import mean, stdev
+import confidit_kernel
 
 class conditional_error(Exception):
     pass
@@ -152,43 +154,86 @@ if __name__ == '__main__':
     if np.min(y_train) == 1:
         y_train -= 1
 
-    if args.algorithm == 'banditron':
-        parameter_list = [0.001, 0.01, 0.025, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+    if args.kernel:
+        if args.algorithm == 'banditron' or 'bpa':
+            parameter_list = [0.001, 0.025, 0.1, 0.3, 0.5]
+        else:
+            parameter_list = [0.0001, 0.01, 1.0, 100.0, 10000.0]
     else:
-        parameter_list = [0.0001, 0.001, 0.01, 0.1, 1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0, 1000000.0]
+        if args.algorithm == 'banditron' or 'bpa':
+            parameter_list = [0.001, 0.01, 0.025, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+        else:
+            parameter_list = [0.0001, 0.001, 0.01, 0.1, 1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0, 1000000.0]
 
     N = x_train.shape[0]
 
-    final_p_list = []
-    for par in parameter_list:
-        np.random.seed(0)
-        if args.algorithm == 'banditron':
-            Band = banditron.Banditron(x_train, y_train, gamma=par, test_interval=100)
-            l, acc, final_p, _ = Band.train(N)
-        elif args.algorithm == 'confidit':
-            Conf = confidit.Confidit(x_train, y_train, eta=par, test_interval=100)
-            l, acc, final_p, _ = Conf.train(N)
-        else:
-            raise conditional_error
-        final_p_list.append(final_p)
-
-    best_parameter = parameter_list[max(zip(final_p_list, range(len(final_p_list))))[1]]
+    if args.kernel:
+        g_list = [0.01, 0.1, 1.0, 10.0, 100.0]
+        final_p_list = []
+        for par in parameter_list:
+            for g in g_list:
+                np.random.seed(0)
+                if args.algorithm == 'banditron':
+                    Band = banditron_kernel.Banditron_kernel(x_train, y_train, g = g, B = args.bag_size, gamma=par, test_interval=100)
+                    l, acc, final_p, _ = Band.train(N)
+                elif args.algorithm == 'confidit':
+                    Conf = confidit_kernel.Confidit_kernel(x_train, y_train, g = g, B = args.bag_size, eta=par, test_interval=100)
+                    l, acc, final_p, _ = Conf.train(N)
+                elif args.algorithm == 'bpa':
+                    BPA = bpa_kernel.BPA_kernel(x_train, y_train, g = g, B = args.bag_size, gamma=par, test_interval=100)
+                    l, acc, final_p, _ = BPA.train(N)
+                else:
+                    raise conditional_error
+                final_p_list.append(final_p)
+            best_parameter = parameter_list[max(zip(final_p_list, range(len(final_p_list))))[1] // 5]
+            best_g = g_list[max(zip(final_p_list, range(len(final_p_list))))[1] % 5]
+    else:
+        final_p_list = []
+        for par in parameter_list:
+            np.random.seed(0)
+            if args.algorithm == 'banditron':
+                Band = banditron.Banditron(x_train, y_train, gamma=par, test_interval=100)
+                l, acc, final_p, final_ac = Band.train(N)
+            elif args.algorithm == 'confidit':
+                Conf = confidit.Confidit(x_train, y_train, eta=par, test_interval=100)
+                l, acc, final_p, final_ac = Conf.train(N)
+            elif args.algorithm == 'bpa':
+                BPA = bpa.BPA(x_train, y_train, gamma=par, test_interval=100)
+                l, acc, final_p, final_ac = BPA.train(N)
+            else:
+                raise conditional_error
+            final_p_list.append(final_p)
+        best_parameter = parameter_list[max(zip(final_p_list, range(len(final_p_list))))[1]]
 
     acc = []
     cum_l, cum_ac = [], []
     l_list, ac_list = [], []
     for p in range(seed1, seed2):
         np.random.seed(p)
-
-        print(args.kernel)
-        if args.algorithm == 'banditron':
-            Band = banditron.Banditron(x_train, y_train, gamma=best_parameter, test_interval=100)
-            l, acc, final_p, final_ac = Band.train(N)
-        elif args.algorithm == 'confidit':
-            Conf = confidit.Confidit(x_train, y_train, eta=best_parameter, test_interval=100)
-            l, acc, final_p, final_ac = Conf.train(N)
+        if args.kernel:
+            if args.algorithm == 'banditron':
+                Band = banditron_kernel.Banditron_kernel(x_train, y_train, gamma=best_parameter, test_interval=100)
+                l, acc, final_p, final_ac = Band.train(N)
+            elif args.algorithm == 'confidit':
+                Conf = confidit_kernel.Confidit_kernel(x_train, y_train, eta=best_parameter, test_interval=100)
+                l, acc, final_p, final_ac = Conf.train(N)
+            elif args.algorithm == 'bpa':
+                BPA = bpa_kernel.BPA_kernel(x_train, y_train, gamma=best_parameter, test_interval=100)
+                l, acc, final_p, final_ac = BPA.train(N)
+            else:
+                raise conditional_error
         else:
-            raise conditional_error
+            if args.algorithm == 'banditron':
+                Band = banditron.Banditron(x_train, y_train, gamma=best_parameter, test_interval=100)
+                l, acc, final_p, final_ac = Band.train(N)
+            elif args.algorithm == 'confidit':
+                Conf = confidit.Confidit(x_train, y_train, eta=best_parameter, test_interval=100)
+                l, acc, final_p, final_ac = Conf.train(N)
+            elif args.algorithm == 'bpa':
+                BPA = bpa.BPA(x_train, y_train, gamma=best_parameter, test_interval=100)
+                l, acc, final_p, final_ac = BPA.train(N)
+            else:
+                raise conditional_error
 
         l_list.append(final_p)
         ac_list.append(final_ac)
@@ -200,16 +245,19 @@ if __name__ == '__main__':
             cum_l = [x + y for (x, y) in zip(cum_l, l)]
             cum_ac = [x + y for (x, y) in zip(cum_ac, acc)]
 
-    print(final_p_list)
-    print([max(zip(final_p_list, range(len(final_p_list))))[1]])
-    print(parameter_list[max(zip(final_p_list, range(len(final_p_list))))[1]])
     cum_l = [x / (seed2 - seed1) for x in cum_l]
     cum_ac = [x / (seed2 - seed1) for x in cum_ac]
 
-    with open('./result/'+args.f_name+'_'+args.algorithm+'_l.pickle', 'wb') as write_f:
-        pickle.dump(cum_l, write_f)
-    with open('./result/' + args.f_name + '_' + args.algorithm + '_ac.pickle', 'wb') as write_f:
-        pickle.dump(cum_ac, write_f)
+    if args.kernel:
+        with open('./result/'+args.f_name+'_'+args.algorithm+'_kernel_l.pickle', 'wb') as write_f:
+            pickle.dump(cum_l, write_f)
+        with open('./result/' + args.f_name + '_' + args.algorithm + '_kernel_ac.pickle', 'wb') as write_f:
+            pickle.dump(cum_ac, write_f)
+    else:
+        with open('./result/'+args.f_name+'_'+args.algorithm+'_l.pickle', 'wb') as write_f:
+            pickle.dump(cum_l, write_f)
+        with open('./result/' + args.f_name + '_' + args.algorithm + '_ac.pickle', 'wb') as write_f:
+            pickle.dump(cum_ac, write_f)
 
     print("ordinary label mean", mean(l_list))
     print("ordinary label stdev", stdev(l_list))

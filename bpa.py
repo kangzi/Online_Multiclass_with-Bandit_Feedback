@@ -56,7 +56,7 @@ class BPA:
 
             gamma = self.gamma
             proposed_label, p = self._det_proposed_label(predict, gamma)
-            self._update(x, predict, proposed_label, p, (proposed_label==y))
+            self._update(x, proposed_label, (proposed_label==y))
 
             if predict == y:
                 correct += 1
@@ -89,12 +89,12 @@ class BPA:
         :param ordinary: whether the proposed label is true label or not
         :return: tau
         """
-        wx = self._det_fun(self.fun(x))
-        x2 = x.dot(x)
+        wx = self._det_fun(self._fun(x))
+        x2 = self._fun(x).dot(self._fun(x))
         tau = np.zeros(self.K)
         assert 0 <= proposed_label < self.K
-        loss = 1 + (1-2*ordinary)*wx[proposed_label]
-        tau[proposed_label] = loss/x2
+        loss = max(1 + (1-2*ordinary)*wx[proposed_label], 0)
+        tau[proposed_label] = (2*ordinary - 1)*loss/x2
         return tau
 
     def _update(self, x, proposed_label, ordinary:bool=True):
