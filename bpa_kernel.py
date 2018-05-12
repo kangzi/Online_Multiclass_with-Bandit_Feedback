@@ -17,7 +17,7 @@ class condition_error(Exception):
 
 class BPA_kernel(BPA):
     def __init__(self, x, y, g = 1.0, B = 500, gamma = 0.5,
-                 test_interval:int=1000, normalize:bool = True):
+                 test_interval:int=100, normalize:bool = True):
         """
         :param x:
         :param y:

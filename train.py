@@ -176,7 +176,8 @@ if __name__ == '__main__':
             for g in g_list:
                 np.random.seed(0)
                 if args.algorithm == 'banditron':
-                    Band = banditron_kernel.Banditron_kernel(x_train, y_train, g = g, B = args.bag_size, gamma=par, test_interval=100)
+                    Band = banditron_kernel.Banditron_kernel(x_train, y_train, g = g, B = args.bag_size,
+                                                             gamma=par, test_interval=100)
                     l, acc, final_p, _ = Band.train(N)
                 elif args.algorithm == 'confidit':
                     Conf = confidit_kernel.Confidit_kernel(x_train, y_train, g = g, B = args.bag_size, eta=par, test_interval=100)
@@ -214,13 +215,13 @@ if __name__ == '__main__':
         np.random.seed(p)
         if args.kernel:
             if args.algorithm == 'banditron':
-                Band = banditron_kernel.Banditron_kernel(x_train, y_train, gamma=best_parameter, test_interval=100)
+                Band = banditron_kernel.Banditron_kernel(x_train, y_train, g = best_g, gamma=best_parameter, test_interval=100)
                 l, acc, final_p, final_ac = Band.train(N)
             elif args.algorithm == 'confidit':
-                Conf = confidit_kernel.Confidit_kernel(x_train, y_train, eta=best_parameter, test_interval=100)
+                Conf = confidit_kernel.Confidit_kernel(x_train, y_train, g = best_g, eta=best_parameter, test_interval=100)
                 l, acc, final_p, final_ac = Conf.train(N)
             elif args.algorithm == 'bpa':
-                BPA = bpa_kernel.BPA_kernel(x_train, y_train, gamma=best_parameter, test_interval=100)
+                BPA = bpa_kernel.BPA_kernel(x_train, y_train, g = best_g, gamma=best_parameter, test_interval=100)
                 l, acc, final_p, final_ac = BPA.train(N)
             else:
                 raise conditional_error

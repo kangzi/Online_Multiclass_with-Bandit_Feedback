@@ -11,7 +11,7 @@ class condition_error(Exception):
 
 
 class Banditron:
-    def __init__(self, x, y, test_x=None, test_y=None, gamma = 0.1, test_interval:int=1000):
+    def __init__(self, x, y, test_x=None, test_y=None, gamma = 0.1, test_interval:int=100):
         """
         :param x: feature patterns for train
         :param y: the correct labels for x
