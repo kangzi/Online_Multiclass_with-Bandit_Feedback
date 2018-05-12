@@ -133,18 +133,23 @@ if __name__ == '__main__':
         x_train, y_train = data.get_data('./data/shuttle.scale')
         x_test, y_test = data.get_data('./data/shuttle.scale.t')
 
+    elif args.dataset == 'sector':
+        K = 105
+        x_train, y_train = data.get_data('./data/sector.scale')
     elif args.dataset == 'pendigits':
         K = 10
         x_train, y_train = data.get_data('./data/pendigits')
         x_test, y_test = data.get_data('./data/pendigits.t')
         x_train /= 100.0
         x_test /= 100.0
-
+    elif args.dataset == 'Sensorless':
+        K = 11
+        x_train, y_train = data.get_data('./data/Sensorless.scale')
     elif args.dataset == 'mnist':
+        K = 10
         save_file = './data/mnist.pkl'
         with open(save_file, 'rb') as f:
             dataset = pickle.load(f)
-
         for key in ('train_img', 'test_img'):
             dataset[key] = dataset[key].astype(np.float32)
             dataset[key] /= 255.0
