@@ -9,6 +9,7 @@ import confidit
 import bpa
 from statistics import mean, stdev
 import confidit_kernel
+import banditron_kernel
 
 class conditional_error(Exception):
     pass

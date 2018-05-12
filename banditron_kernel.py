@@ -2,7 +2,7 @@ import numpy as np
 from enum import Enum
 import sys, os
 sys.path.append(os.pardir)
-from confidit import Confidit
+from banditron import Banditron
 
 
 class kernel(Enum):
