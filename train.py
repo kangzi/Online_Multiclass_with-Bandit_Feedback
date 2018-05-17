@@ -142,6 +142,12 @@ if __name__ == '__main__':
         x_test, y_test = data.get_data('./data/pendigits.t')
         x_train /= 100.0
         x_test /= 100.0
+    elif args.dataset == 'segment':
+        K = 7
+        x_train, y_train = data.get_data('./data/segment.scale')
+    elif args.dataset == 'vehicle':
+        K = 4
+        x_train, y_train = data.get_data('./data/vehicle.scale')
     elif args.dataset == 'Sensorless':
         K = 11
         x_train, y_train = data.get_data('./data/Sensorless.scale')

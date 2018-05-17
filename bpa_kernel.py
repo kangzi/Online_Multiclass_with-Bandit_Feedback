@@ -4,7 +4,8 @@ import sys, os
 sys.path.append(os.pardir)
 from banditron import Banditron
 from bpa import BPA
-
+import warnings
+warnings.simplefilter("error", RuntimeWarning)
 
 class kernel(Enum):
     gauss = 0
@@ -55,6 +56,11 @@ class BPA_kernel(BPA):
             elif count < self.B:
                 self.bags = np.vstack((self.bags, x.reshape(1, -1)))
                 self.w = np.hstack((self.w, np.zeros((self.K, 1))))
+
+            try:
+                _ = self._fun(x)
+            except RuntimeWarning:
+                continue
 
             wx = self._det_fun(self._fun(x))
             predict = self._det_label(wx)

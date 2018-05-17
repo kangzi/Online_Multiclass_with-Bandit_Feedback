@@ -3,7 +3,8 @@ from enum import Enum
 import sys, os
 sys.path.append(os.pardir)
 from confidit import Confidit
-
+import warnings
+warnings.simplefilter("error", RuntimeWarning)
 
 class kernel(Enum):
     gauss = 0
@@ -59,6 +60,11 @@ class Confidit_kernel(Confidit):
                 self.bags = np.vstack((self.bags, x.reshape(1, -1)))
                 self.w = np.hstack((self.w, np.zeros((self.K, 1))))
                 self.A = np.hstack((self.A, np.ones((self.K, 1)) * (1 + self.alpha)))
+
+            try:
+                _ = self._fun(x)
+            except RuntimeWarning:
+                continue
 
             wx = self._det_fun(self._fun(x))
             predict = self._det_label(wx)
