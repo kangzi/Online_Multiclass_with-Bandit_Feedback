@@ -252,24 +252,22 @@ if __name__ == '__main__':
         l_list.append(final_p)
         ac_list.append(final_ac)
 
-        if cum_l == []:
-            cum_l = l
-            cum_ac = acc
-        else:
-            cum_l = [x + y for (x, y) in zip(cum_l, l)]
-            cum_ac = [x + y for (x, y) in zip(cum_ac, acc)]
+        cum_l.append(l)
 
-    cum_l = [x / (seed2 - seed1) for x in cum_l]
-    cum_ac = [x / (seed2 - seed1) for x in cum_ac]
+    mean_list, std_list = [], []
+    for i in range(cum_l[0]):
+        res_list = [cum_l[s][i] for s in range(seed2 - seed1)]
+        mean_list.append(np.mean(np.array(res_list)))
+        std_list.append(np.std(np.array(res_list)))
 
     if args.kernel:
         with open('./result/'+args.f_name+'_'+args.algorithm+'_kernel_l.pickle', 'wb') as write_f:
-            pickle.dump(cum_l, write_f)
+            pickle.dump((mean_list, std_list), write_f)
         with open('./result/' + args.f_name + '_' + args.algorithm + '_kernel_ac.pickle', 'wb') as write_f:
             pickle.dump(cum_ac, write_f)
     else:
         with open('./result/'+args.f_name+'_'+args.algorithm+'_l.pickle', 'wb') as write_f:
-            pickle.dump(cum_l, write_f)
+            pickle.dump((mean_list, std_list), write_f)
         with open('./result/' + args.f_name + '_' + args.algorithm + '_ac.pickle', 'wb') as write_f:
             pickle.dump(cum_ac, write_f)
 
