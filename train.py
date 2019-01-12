@@ -255,7 +255,7 @@ if __name__ == '__main__':
         cum_l.append(l)
 
     mean_list, std_list = [], []
-    for i in range(cum_l[0]):
+    for i in range(len(cum_l[0])):
         res_list = [cum_l[s][i] for s in range(seed2 - seed1)]
         mean_list.append(np.mean(np.array(res_list)))
         std_list.append(np.std(np.array(res_list)))
