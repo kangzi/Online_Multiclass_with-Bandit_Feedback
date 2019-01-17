@@ -68,6 +68,7 @@ class Banditron_kernel(Banditron):
             proposed_label, p = self._det_proposed_label(predict, gamma)
             self._update(x, predict, proposed_label, p, (proposed_label == y))
 
+
             if predict == y:
                 correct += 1
             else:
