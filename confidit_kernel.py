@@ -64,6 +64,14 @@ class Confidit_kernel(Confidit):
             try:
                 _ = self._fun(x)
             except RuntimeWarning:
+                false += 1
+                if count % self.interval == 0:
+                    print(count)
+                    print("ordinary labels ratio", ol / (ol + cl))
+                    print("accuracy ratio", correct / (correct + false))
+                    print('')
+                    ol_ratio_list.append(ol / (ol + cl))
+                    accuracy_ratio_list.append(correct / (correct + false))
                 continue
 
             wx = self._det_fun(self._fun(x))
